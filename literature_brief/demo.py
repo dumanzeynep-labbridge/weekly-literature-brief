@@ -3,6 +3,7 @@
 from datetime import date, datetime, timedelta, timezone
 
 from .pipeline import publication_window
+from .search import evaluate_paper, summarize_searches
 
 
 def demo_report(config: dict, end: date | None = None) -> dict:
@@ -32,12 +33,14 @@ def demo_report(config: dict, end: date | None = None) -> dict:
             "rationale": "Illustrative relevance score for the configured research interests. No LLM or paper API was called.",
             "status": "scored", "error": "",
         })
+        papers[-1]["focused_search"] = evaluate_paper(papers[-1]["title"], papers[-1]["abstract"], config.get("search"))
     return {
         "title": config["title"], "generated_at": datetime.now(timezone.utc).isoformat(),
         "window_start": start.isoformat(), "window_end": end.isoformat(), "interests": config["interests"],
         "interest_labels": config.get("interest_labels", config["interests"]),
         "provider": config["llm"]["provider"], "model": config["llm"]["model"], "demo": True,
         "min_relevance": config["min_relevance"], "top_n": config["top_n"], "papers": papers,
+        "focused_searches": summarize_searches(papers, config.get("search")),
         "source_statuses": [{"name": "Offline demonstration", "status": "ok", "fetched": len(papers),
                              "message": "Synthetic examples only; no live sources or LLM calls."}],
         "stats": {"discovered": len(papers), "scored": len(papers), "missing_abstract": 0,

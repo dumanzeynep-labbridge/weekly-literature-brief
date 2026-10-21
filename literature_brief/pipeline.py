@@ -11,6 +11,7 @@ import threading
 
 from .http import HttpClient, HttpError
 from .scoring import Scorer, ScoringError
+from .search import evaluate_paper, summarize_searches
 from .sources import fetch_all
 
 LOGGER = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ def build_report(config: dict, *, end: date | None = None, cache_dir: Path = Pat
 
     def assess(paper):
         record = asdict(paper)
+        record["focused_search"] = evaluate_paper(paper.title, paper.abstract, config.get("search"))
         record.update(relevance=None, methodology="", key_findings="", rationale="", error="")
         if not paper.abstract.strip():
             record.update(status="missing_abstract", error="No abstract available from the configured sources.")
@@ -49,7 +51,7 @@ def build_report(config: dict, *, end: date | None = None, cache_dir: Path = Pat
                 record.update(scorer.score(paper, allow_request=not provider_stopped.is_set()), status="scored")
             except HttpError as exc:
                 record.update(status="scoring_failed", error=str(exc))
-                if exc.status in {400, 401, 402, 403, 404}:
+                if exc.permanent:
                     provider_stopped.set()
             except (ScoringError, OSError) as exc:
                 record.update(status="scoring_failed", error=str(exc))
@@ -68,6 +70,7 @@ def build_report(config: dict, *, end: date | None = None, cache_dir: Path = Pat
         "model": config["llm"]["model"], "demo": False, "fetch_only": fetch_only,
         "min_relevance": config["min_relevance"], "top_n": config["top_n"],
         "papers": records, "source_statuses": statuses, "stats": stats,
+        "focused_searches": summarize_searches(records, config.get("search")),
     }
     for status in statuses:
         if status["status"] != "ok":

@@ -124,13 +124,32 @@ class RenderBriefTests(unittest.TestCase):
         self.assertNotIn("The relevance assessment could not be completed", html)
 
     def test_fetch_only_mode_explains_no_ai_was_requested(self):
-        html, _ = self.render(report([paper(score=None, status="not_scored")], fetch_only=True))
+        html, _ = self.render(report([paper(score=None, status="not_scored"),
+                                     paper("No abstract", None, status="missing_abstract", abstract="")], fetch_only=True))
         self.assertIn("Discovery only; no AI assessment was requested.", html)
         self.assertIn("Papers discovered this week", html)
-        self.assertIn("Discovered papers <span>1</span>", html)
         self.assertNotIn("Papers awaiting assessment", html)
         self.assertNotIn("none has a completed assessment", html)
         self.assertNotIn("Relevance scores and the two-bullet summaries are AI-generated", html)
+        self.assertIn('<strong>1</strong><span>abstracts available</span>', html)
+        self.assertIn('<strong>1</strong><span>abstracts unavailable</span>', html)
+        self.assertIn('<span>focused matches</span>', html)
+        self.assertNotIn('<span>assessed</span>', html)
+        self.assertNotIn('<span>unscored</span>', html)
+        self.assertNotIn('at relevance ', html)
+        self.assertNotIn('<div class="score"', html)
+        self.assertIn('Discovery only · no LLM used', html)
+        self.assertNotIn('openai / test-model', html)
+        self.assertIn('Complete metadata &amp; keyword matches (JSON)', html)
+        self.assertEqual(html.count('Metadata only</span>'), 2)
+        self.assertEqual(html.count('<article class="paper"'), 2)
+        self.assertNotIn('<details class="paper-group"', html)
+
+    def test_empty_fetch_only_edition_has_no_scoring_or_featured_claim(self):
+        html, _ = self.render(report(fetch_only=True))
+        self.assertIn('No papers discovered this week', html)
+        self.assertIn('does not establish that no relevant work was published', html)
+        self.assertNotIn('No featured papers', html)
 
     def test_concise_interest_labels_and_retrieval_step_label(self):
         html, saved = self.render(report(interest_labels=["CHO cells"], interests=["A detailed scoring interest"],
@@ -145,6 +164,49 @@ class RenderBriefTests(unittest.TestCase):
         html, _ = self.render(report([paper(), paper("Failed", None, status="scoring_failed")], stats={"scoring_failed": 1}))
         self.assertIn("Some AI assessments are incomplete.", html)
         self.assertIn("1 paper(s) could not be assessed", html)
+
+    def test_focused_search_index_links_existing_cards_and_preserves_json(self):
+        match = {"matched_blocks": {"host": ["CHO cells"], "mitochondria": ["NRF1"]},
+                 "matched_combinations": ["host_mito"], "ambiguity_notes": ["Check NRF1 versus NFE2L1."]}
+        summary = {"blocks": [
+            {"id": "host", "label": "Host / system", "terms": ["CHO cells"]},
+            {"id": "mitochondria", "label": "Mitochondria", "terms": ["NRF1"]},
+        ], "combinations": [{"id": "host_mito", "label": "Host + mitochondria", "blocks": ["host", "mitochondria"], "match_count": 1}],
+            "matched_papers": 1}
+        record = paper("CHO NRF1", None, abstract="", status="missing_abstract", focused_search=match)
+        html, saved = self.render(report([record, paper("Other paper")], focused_searches=summary))
+        self.assertIn('Focused search matches', html)
+        self.assertIn('Host + mitochondria <span>1</span>', html)
+        self.assertIn('href="#paper-1">CHO NRF1</a>', html)
+        self.assertIn('(title match; abstract unavailable)', html)
+        self.assertIn('<details class="paper-group" open>', html)
+        self.assertIn('data-combinations="host_mito"', html)
+        self.assertIn('Matched terms in title / abstract', html)
+        self.assertIn('<strong>Host / system</strong>: CHO cells', html)
+        self.assertIn('Check NRF1 versus NFE2L1.', html)
+        self.assertEqual(html.count('<article class="paper"'), 2)
+        self.assertEqual(saved["papers"][0]["focused_search"], match)
+        self.assertEqual(saved["focused_searches"], summary)
+
+    def test_zero_focused_matches_explains_scope_and_retains_papers(self):
+        html, saved = self.render(report([paper()], focused_searches={
+            "blocks": [], "combinations": [{"id": "focus", "label": "A focused combination", "blocks": [], "match_count": 0}],
+            "matched_papers": 0,
+        }))
+        self.assertIn('No matches found in the titles and available abstracts of the configured sources for this publication window.', html)
+        self.assertIn('0 distinct paper(s) matched', html)
+        self.assertEqual(html.count('<article class="paper"'), 1)
+        self.assertEqual(len(saved["papers"]), 1)
+
+    def test_focused_search_text_is_escaped(self):
+        attack = '<img src=x onerror="alert(1)">'
+        html, _ = self.render(report([paper(focused_search={
+            "matched_blocks": {"host": [attack]}, "matched_combinations": ["focus"], "ambiguity_notes": [attack],
+        })], focused_searches={"blocks": [{"id": "host", "label": attack, "terms": [attack]}],
+                              "combinations": [{"id": "focus", "label": attack, "blocks": ["host"], "match_count": 1}],
+                              "matched_papers": 1}))
+        self.assertNotIn(attack, html)
+        self.assertIn('&lt;img src=x onerror=&quot;alert(1)&quot;&gt;', html)
 
 
 if __name__ == "__main__":

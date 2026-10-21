@@ -14,14 +14,37 @@ from urllib.request import Request, urlopen
 
 LOGGER = logging.getLogger(__name__)
 RETRYABLE = {408, 429, 500, 502, 503, 504, 529}
+BILLING_CODES = {
+    "insufficient_quota", "credit_balance_exhausted", "organization_spend_limit_exceeded",
+    "project_spend_limit_exceeded", "organization_usage_limit_exceeded",
+}
 
 
 class HttpError(RuntimeError):
     """An external endpoint failed; request headers and bodies are never exposed."""
 
-    def __init__(self, message: str, status: int | None = None):
+    def __init__(self, message: str, status: int | None = None, error_code: str | None = None):
         super().__init__(message)
         self.status = status
+        self.error_code = error_code if error_code in BILLING_CODES else None
+        self.permanent = status in {400, 401, 402, 403, 404} or self.error_code is not None
+
+
+def _billing_error_code(error: HTTPError, endpoint: str) -> str | None:
+    """Retain only recognized provider codes; never expose response text."""
+    if endpoint not in {"api.openai.com", "api.anthropic.com"}:
+        return None
+    try:
+        body = json.loads(error.read(65536))
+        detail = body.get("error", {}) if isinstance(body, dict) else {}
+        if not isinstance(detail, dict):
+            return None
+        for value in (detail.get("code"), detail.get("type")):
+            if isinstance(value, str) and value in BILLING_CODES:
+                return value
+    except (ValueError, OSError, AttributeError, TypeError):
+        pass
+    return None
 
 
 class HttpClient:
@@ -67,9 +90,11 @@ class HttpClient:
             except HTTPError as exc:
                 status = exc.code
                 retry_after = exc.headers.get("Retry-After") if exc.headers else None
+                error_code = _billing_error_code(exc, endpoint)
                 exc.close()
-                if status not in RETRYABLE or attempt == self.retries:
-                    raise HttpError(f"HTTP {status} from {endpoint}.", status) from None
+                if status not in RETRYABLE or error_code or attempt == self.retries:
+                    suffix = f" Provider code: {error_code}." if error_code else ""
+                    raise HttpError(f"HTTP {status} from {endpoint}.{suffix}", status, error_code) from None
             except (URLError, TimeoutError, OSError):
                 retry_after = None
                 if attempt == self.retries:

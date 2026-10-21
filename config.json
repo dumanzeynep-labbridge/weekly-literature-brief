@@ -1,11 +1,20 @@
 {
   "title": "The Bioprocess Brief",
-  "interest_labels": ["Bioprocessing", "Mammalian cell engineering", "Metabolic engineering", "Cell & gene therapy", "CHO production systems"],
+  "interest_labels": [
+    "Bioprocessing",
+    "Mammalian cell engineering",
+    "Metabolic engineering",
+    "Cell & gene therapy",
+    "CHO production systems",
+    "Mitochondrial regulation & ER ATP",
+    "CHO secretory productivity & biosensors"
+  ],
   "interests": [
     "Bioprocess development, process intensification, scale-up, perfusion, media optimization, and process analytics",
     "Mammalian cell engineering, especially Chinese hamster ovary (CHO) cell line development and recombinant protein production",
     "Metabolic engineering, flux analysis, and systems biology with a clear application to industrial biotechnology or mammalian cells",
-    "Cell and gene therapy manufacturing, viral vector production, engineered therapeutic cells, and enabling platform technologies"
+    "Cell and gene therapy manufacturing, viral vector production, engineered therapeutic cells, and enabling platform technologies",
+    "The mechanistic link from nuclear respiratory factor 1 (NRF1)-driven mitochondrial biogenesis and energy metabolism through AXER/SLC35B1-mediated endoplasmic reticulum ATP supply to CHO secretory capacity and recombinant protein productivity, including energy/redox engineering and biosensors. Distinguish nuclear respiratory factor 1 from the NFE2L1 alias NRF1, and GABPA (nuclear respiratory factor 2 in mitochondrial literature) from NFE2L2/NRF2; flag ambiguous gene identities rather than assuming equivalence."
   ],
   "llm": {
     "provider": "openai",
@@ -21,20 +30,285 @@
     "enrich_abstracts": true,
     "contact_email": "",
     "crossref": [
-      {"name": "Nature Portfolio (10.1038)", "prefix": "10.1038"},
-      {"name": "PLOS journals", "prefix": "10.1371"},
-      {"name": "Biotechnology and Bioengineering", "issn": "1097-0290"},
-      {"name": "Metabolic Engineering", "issn": "1096-7176"},
-      {"name": "Trends in Biotechnology", "issn": "0167-7799"},
-      {"name": "Nucleic Acids Research", "issn": "1362-4962"},
-      {"name": "PNAS", "issn": "1091-6490"},
-      {"name": "Biotechnology Journal", "issn": "1860-7314"},
-      {"name": "Biotechnology Progress", "issn": "1520-6033"},
-      {"name": "Biotechnology Advances", "issn": "0734-9750"},
-      {"name": "Biochemical Engineering Journal", "issn": "1369-703X"},
-      {"name": "Molecular Therapy", "issn": "1525-0016"},
-      {"name": "Molecular Therapy Methods & Clinical Development", "issn": "2329-0501"},
-      {"name": "Molecular Therapy Advances", "issn": "3117-387X"}
+      {
+        "name": "Nature Portfolio (10.1038)",
+        "prefix": "10.1038"
+      },
+      {
+        "name": "PLOS journals",
+        "prefix": "10.1371"
+      },
+      {
+        "name": "Biotechnology and Bioengineering",
+        "issn": "1097-0290"
+      },
+      {
+        "name": "Metabolic Engineering",
+        "issn": "1096-7176"
+      },
+      {
+        "name": "Trends in Biotechnology",
+        "issn": "0167-7799"
+      },
+      {
+        "name": "Nucleic Acids Research",
+        "issn": "1362-4962"
+      },
+      {
+        "name": "PNAS",
+        "issn": "1091-6490"
+      },
+      {
+        "name": "Biotechnology Journal",
+        "issn": "1860-7314"
+      },
+      {
+        "name": "Biotechnology Progress",
+        "issn": "1520-6033"
+      },
+      {
+        "name": "Biotechnology Advances",
+        "issn": "0734-9750"
+      },
+      {
+        "name": "Biochemical Engineering Journal",
+        "issn": "1369-703X"
+      },
+      {
+        "name": "Molecular Therapy",
+        "issn": "1525-0016"
+      },
+      {
+        "name": "Molecular Therapy Methods & Clinical Development",
+        "issn": "2329-0501"
+      },
+      {
+        "name": "Molecular Therapy Advances",
+        "issn": "3117-387X"
+      }
+    ]
+  },
+  "search": {
+    "blocks": [
+      {
+        "id": "host",
+        "label": "CHO and mammalian production hosts",
+        "terms": [
+          "CHO cells",
+          "Chinese hamster ovary",
+          "CHO-K1",
+          "CHO K1",
+          "CHOK1",
+          "CHO-S",
+          "CHO S",
+          "DG44",
+          "recombinant protein production",
+          "monoclonal antibody production",
+          "IgG expression",
+          "mammalian cell culture",
+          "fed-batch",
+          "perfusion culture",
+          "cell line engineering",
+          "host cell engineering",
+          "cell line development"
+        ]
+      },
+      {
+        "id": "mitochondria",
+        "label": "NRF1 and mitochondrial regulation",
+        "terms": [
+          "NRF1",
+          "NRF-1",
+          "nuclear respiratory factor 1",
+          "mitochondrial biogenesis",
+          "mitochondrial biogenesis regulator",
+          "PGC-1α",
+          "PGC-1alpha",
+          "PGC-1a",
+          "PPARGC1A",
+          "PGC-1β",
+          "PGC-1beta",
+          "PGC-1b",
+          "PRC",
+          "TFAM",
+          "TFB1M",
+          "TFB2M",
+          "mtDNA copy number",
+          "OXPHOS",
+          "oxidative phosphorylation",
+          "electron transport chain",
+          "respiratory capacity",
+          "nuclear-mitochondrial communication",
+          "retrograde signalling",
+          "retrograde signaling",
+          "GABPA"
+        ]
+      },
+      {
+        "id": "er_atp",
+        "label": "ER ATP supply and folding energetics",
+        "terms": [
+          "AXER",
+          "SLC35B1",
+          "ER ATP/ADP exchanger",
+          "ER ATP",
+          "endoplasmic reticulum ATP",
+          "luminal ATP",
+          "ATP/ADP antiport",
+          "nucleotide transporter",
+          "nucleotide sugar transporter",
+          "SLC35 family",
+          "BiP",
+          "HSPA5",
+          "HSPA5 ATPase cycle",
+          "chaperone ATP demand",
+          "SERCA",
+          "Ca²⁺-ATPase",
+          "Ca2+-ATPase",
+          "ER calcium-ATP coupling",
+          "protein folding energetics",
+          "secretory pathway energy demand",
+          "ERAT",
+          "ERAT4",
+          "ER-targeted ATP sensor"
+        ]
+      },
+      {
+        "id": "energy",
+        "label": "Energy and redox engineering",
+        "terms": [
+          "NDI1",
+          "Ndi1",
+          "alternative NADH dehydrogenase",
+          "rotenone-insensitive NADH oxidation",
+          "AOX",
+          "alternative oxidase",
+          "LbNOX",
+          "water-forming NADH oxidase",
+          "NADH/NAD⁺ ratio engineering",
+          "NADH/NAD+ ratio engineering",
+          "SLC25A51",
+          "mitochondrial NAD⁺ transporter",
+          "mitochondrial NAD+ transporter",
+          "ATP/ADP ratio",
+          "adenylate energy charge",
+          "energy state",
+          "proton motive force",
+          "membrane potential",
+          "uncoupling",
+          "Warburg effect",
+          "Crabtree effect",
+          "lactate shift",
+          "glycolytic overflow"
+        ]
+      },
+      {
+        "id": "phenotype",
+        "label": "Secretory productivity and metabolic phenotype",
+        "terms": [
+          "specific productivity",
+          "cell-specific productivity",
+          "qP",
+          "volumetric titre",
+          "volumetric titer",
+          "IVCD",
+          "integral viable cell density",
+          "secretory capacity",
+          "difficult-to-express proteins",
+          "UPR",
+          "unfolded protein response",
+          "XBP1",
+          "ATF6",
+          "PERK",
+          "ER stress",
+          "genome-scale metabolic model",
+          "GEM",
+          "flux balance analysis",
+          "¹³C metabolic flux analysis",
+          "13C metabolic flux analysis"
+        ]
+      },
+      {
+        "id": "biosensors",
+        "label": "ATP, redox and metabolic biosensors",
+        "terms": [
+          "genetically encoded ATP sensor",
+          "PercevalHR",
+          "ATeam",
+          "QUEEN",
+          "iATPSnFR",
+          "SoNar",
+          "Peredox",
+          "roGFP",
+          "redox biosensor",
+          "FRET biosensor",
+          "single-cell metabolic imaging"
+        ]
+      }
+    ],
+    "combinations": [
+      {
+        "id": "host_mitochondria_er_atp",
+        "label": "Host + mitochondrial regulation + ER ATP",
+        "blocks": [
+          "host",
+          "mitochondria",
+          "er_atp"
+        ]
+      },
+      {
+        "id": "host_mitochondria_energy",
+        "label": "Host + mitochondrial regulation + energy/redox",
+        "blocks": [
+          "host",
+          "mitochondria",
+          "energy"
+        ]
+      },
+      {
+        "id": "host_mitochondria_phenotype",
+        "label": "Host + mitochondrial regulation + productivity/phenotype",
+        "blocks": [
+          "host",
+          "mitochondria",
+          "phenotype"
+        ]
+      },
+      {
+        "id": "host_er_atp_energy",
+        "label": "Host + ER ATP + energy/redox",
+        "blocks": [
+          "host",
+          "er_atp",
+          "energy"
+        ]
+      },
+      {
+        "id": "host_er_atp_phenotype",
+        "label": "Host + ER ATP + productivity/phenotype",
+        "blocks": [
+          "host",
+          "er_atp",
+          "phenotype"
+        ]
+      },
+      {
+        "id": "host_energy_phenotype",
+        "label": "Host + energy/redox + productivity/phenotype",
+        "blocks": [
+          "host",
+          "energy",
+          "phenotype"
+        ]
+      },
+      {
+        "id": "host_biosensors",
+        "label": "Host + biosensors",
+        "blocks": [
+          "host",
+          "biosensors"
+        ]
+      }
     ]
   }
 }

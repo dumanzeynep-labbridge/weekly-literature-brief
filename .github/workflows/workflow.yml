@@ -56,7 +56,13 @@ jobs:
           LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
-        run: python -m literature_brief --output site
+          BRIEF_MODE: ${{ vars.BRIEF_MODE || 'fetch-only' }}
+        run: |
+          case "$BRIEF_MODE" in
+            fetch-only) python -m literature_brief --fetch-only --output site ;;
+            ai) python -m literature_brief --output site ;;
+            *) echo "BRIEF_MODE must be fetch-only or ai." >&2; exit 1 ;;
+          esac
       - name: Save assessments even if a later paper failed
         if: always() && steps.generate.outcome != 'skipped' && hashFiles('.cache/scores/*.json') != ''
         uses: actions/cache/save@v6

@@ -7,6 +7,8 @@ import os
 import re
 from pathlib import Path
 
+from .search import validate_search_config
+
 DEFAULT_MODELS = {"openai": "gpt-4.1-mini", "anthropic": "claude-haiku-4-5"}
 
 
@@ -82,4 +84,5 @@ def load_config(path: Path) -> dict:
     labels = config.get("interest_labels", interests)
     if not isinstance(labels, list) or any(not isinstance(label, str) for label in labels):
         raise ValueError("interest_labels must be an array of text labels.")
+    validate_search_config(config.get("search"))
     return config

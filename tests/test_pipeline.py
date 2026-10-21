@@ -104,6 +104,48 @@ class PipelineTests(unittest.TestCase):
 
     @patch("literature_brief.pipeline.fetch_all")
     @patch("literature_brief.pipeline.Scorer")
+    def test_exhausted_credits_stop_requests_but_transient_429_does_not(self, scorer, fetch):
+        fetch.return_value = ([paper(), paper("10.1234/other")], sources_ok())
+        for error_code, expected_allowed in (("credit_balance_exhausted", False), ("rate_limit_exceeded", True)):
+            with self.subTest(error_code=error_code):
+                scorer.return_value.score.reset_mock()
+                scorer.return_value.score.side_effect = [HttpError("HTTP 429 from api.openai.com.", 429, error_code=error_code), assessment()]
+                report, result = build_report(configuration())
+                self.assertEqual(result, 0)
+                self.assertEqual(scorer.return_value.score.call_args_list[1].kwargs["allow_request"], expected_allowed)
+                self.assertEqual(report["stats"]["scored"], 1)
+
+    @patch("literature_brief.pipeline.fetch_all")
+    @patch("literature_brief.pipeline.Scorer")
+    def test_focused_combinations_annotate_every_record_without_excluding_scoring(self, scorer, fetch):
+        focused = paper("10.1234/focused", "CHO cells were assessed for mitochondrial biogenesis and ER ATP.")
+        unrelated = paper("10.1234/unrelated", "An unrelated abstract with methods and findings.")
+        title_only = paper("10.1234/title-only", "")
+        title_only.title = "CHO cells and mitochondrial biogenesis with ER ATP"
+        fetch.return_value = ([focused, unrelated, title_only], sources_ok())
+        scorer.return_value.score.return_value = assessment()
+        config = configuration()
+        config["search"] = {
+            "blocks": [
+                {"id": "host", "label": "Host", "terms": ["CHO cells"]},
+                {"id": "mitochondria", "label": "Mitochondria", "terms": ["mitochondrial biogenesis"]},
+                {"id": "er_atp", "label": "ER ATP", "terms": ["ER ATP"]},
+            ],
+            "combinations": [{"id": "host_mito_er", "label": "Host + mitochondria + ER ATP", "blocks": ["host", "mitochondria", "er_atp"]}],
+        }
+        report, result = build_report(config)
+        self.assertEqual(result, 0)
+        self.assertEqual(scorer.return_value.score.call_count, 2)
+        records = {record["doi"]: record for record in report["papers"]}
+        self.assertEqual(records[focused.doi]["focused_search"]["matched_combinations"], ["host_mito_er"])
+        self.assertEqual(records[unrelated.doi]["focused_search"]["matched_combinations"], [])
+        self.assertEqual(records[title_only.doi]["status"], "missing_abstract")
+        self.assertEqual(records[title_only.doi]["focused_search"]["matched_combinations"], ["host_mito_er"])
+        self.assertEqual(report["focused_searches"]["matched_papers"], 2)
+        self.assertEqual(report["focused_searches"]["combinations"][0]["match_count"], 2)
+
+    @patch("literature_brief.pipeline.fetch_all")
+    @patch("literature_brief.pipeline.Scorer")
     def test_fetch_only_never_constructs_scorer(self, scorer, fetch):
         fetch.return_value = ([paper()], sources_ok())
         report, result = build_report(configuration(), fetch_only=True)

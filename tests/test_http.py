@@ -36,6 +36,44 @@ class HttpTests(unittest.TestCase):
         self.assertNotIn("secret", str(result.exception))
         self.assertEqual(open_url.call_count, 1)
 
+    @patch("literature_brief.http.time.sleep")
+    @patch("literature_brief.http.urlopen")
+    def test_exhausted_credit_stops_without_retry_or_sensitive_body(self, open_url, sleep):
+        body = b'{"error":{"type":"insufficient_quota","code":"credit_balance_exhausted","message":"secret-key private-account"}}'
+        open_url.side_effect = HTTPError("https://api.openai.com/v1/responses", 429, "", {}, BytesIO(body))
+        with self.assertRaises(HttpError) as result:
+            HttpClient().get_json("https://api.openai.com/v1/responses", headers={"Authorization": "secret-key"})
+        error = result.exception
+        self.assertEqual(error.status, 429)
+        self.assertEqual(error.error_code, "credit_balance_exhausted")
+        self.assertTrue(error.permanent)
+        self.assertIn("credit_balance_exhausted", str(error))
+        self.assertNotIn("secret-key", str(error))
+        self.assertNotIn("private-account", str(error))
+        self.assertEqual(open_url.call_count, 1)
+        sleep.assert_not_called()
+
+    @patch("literature_brief.http.time.sleep")
+    @patch("literature_brief.http.urlopen")
+    def test_temporary_provider_rate_limit_still_retries(self, open_url, sleep):
+        body = b'{"error":{"type":"rate_limit_error","code":"rate_limit_exceeded","message":"private text"}}'
+        open_url.side_effect = [HTTPError("https://api.openai.com", 429, "", {}, BytesIO(body)), Response(b'{"ok":true}')]
+        self.assertTrue(HttpClient().get_json("https://api.openai.com/v1/responses")["ok"])
+        self.assertEqual(open_url.call_count, 2)
+        self.assertEqual(sleep.call_count, 1)
+
+    @patch("literature_brief.http.urlopen")
+    def test_unknown_error_codes_and_non_json_never_leak(self, open_url):
+        for body in (b'{"error":{"code":"secret-key","message":"private text"}}', b'private non-JSON text'):
+            with self.subTest(body=body):
+                open_url.side_effect = HTTPError("https://api.openai.com", 429, "", {}, BytesIO(body))
+                with self.assertRaises(HttpError) as result:
+                    HttpClient(retries=0).get_json("https://api.openai.com/v1/responses")
+                self.assertIsNone(result.exception.error_code)
+                self.assertFalse(result.exception.permanent)
+                self.assertNotIn("private", str(result.exception))
+                self.assertNotIn("secret", str(result.exception))
+
     @patch("literature_brief.http.urlopen")
     def test_retry_exhaustion_is_bounded(self, open_url):
         open_url.side_effect = HTTPError("https://api.example.com", 503, "", {}, None)
