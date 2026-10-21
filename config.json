@@ -1,0 +1,40 @@
+{
+  "title": "The Bioprocess Brief",
+  "interest_labels": ["Bioprocessing", "Mammalian cell engineering", "Metabolic engineering", "Cell & gene therapy", "CHO production systems"],
+  "interests": [
+    "Bioprocess development, process intensification, scale-up, perfusion, media optimization, and process analytics",
+    "Mammalian cell engineering, especially Chinese hamster ovary (CHO) cell line development and recombinant protein production",
+    "Metabolic engineering, flux analysis, and systems biology with a clear application to industrial biotechnology or mammalian cells",
+    "Cell and gene therapy manufacturing, viral vector production, engineered therapeutic cells, and enabling platform technologies"
+  ],
+  "llm": {
+    "provider": "openai",
+    "model": "gpt-4.1-mini",
+    "max_output_tokens": 1000,
+    "workers": 3
+  },
+  "min_relevance": 6,
+  "top_n": 20,
+  "max_papers": 0,
+  "sources": {
+    "biorxiv": true,
+    "enrich_abstracts": true,
+    "contact_email": "",
+    "crossref": [
+      {"name": "Nature Portfolio (10.1038)", "prefix": "10.1038"},
+      {"name": "PLOS journals", "prefix": "10.1371"},
+      {"name": "Biotechnology and Bioengineering", "issn": "1097-0290"},
+      {"name": "Metabolic Engineering", "issn": "1096-7176"},
+      {"name": "Trends in Biotechnology", "issn": "0167-7799"},
+      {"name": "Nucleic Acids Research", "issn": "1362-4962"},
+      {"name": "PNAS", "issn": "1091-6490"},
+      {"name": "Biotechnology Journal", "issn": "1860-7314"},
+      {"name": "Biotechnology Progress", "issn": "1520-6033"},
+      {"name": "Biotechnology Advances", "issn": "0734-9750"},
+      {"name": "Biochemical Engineering Journal", "issn": "1369-703X"},
+      {"name": "Molecular Therapy", "issn": "1525-0016"},
+      {"name": "Molecular Therapy Methods & Clinical Development", "issn": "2329-0501"},
+      {"name": "Molecular Therapy Advances", "issn": "3117-387X"}
+    ]
+  }
+}

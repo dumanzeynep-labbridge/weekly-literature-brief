@@ -1,0 +1,86 @@
+name: Weekly literature brief
+
+on:
+  schedule:
+    - cron: "0 7 * * 1" # Monday at 07:00 UTC (independent of daylight saving time).
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: literature-brief-${{ github.event_name == 'pull_request' && github.ref || 'pages' }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Run offline tests
+        run: python -m unittest discover -s tests -v
+
+  build:
+    if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Restore validated LLM assessments
+        uses: actions/cache/restore@v6
+        with:
+          path: .cache/scores
+          key: literature-scores-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: literature-scores-${{ runner.os }}-
+      - name: Fetch papers and build the brief
+        id: generate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+        run: python -m literature_brief --output site
+      - name: Save assessments even if a later paper failed
+        if: always() && steps.generate.outcome != 'skipped' && hashFiles('.cache/scores/*.json') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/scores
+          key: literature-scores-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload the generated site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

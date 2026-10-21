@@ -1,0 +1,101 @@
+{
+  "title": "The Bioprocess Brief",
+  "generated_at": "2026-10-21T12:01:15.530916+00:00",
+  "window_start": "2026-10-12",
+  "window_end": "2026-10-19",
+  "interests": [
+    "Bioprocess development, process intensification, scale-up, perfusion, media optimization, and process analytics",
+    "Mammalian cell engineering, especially Chinese hamster ovary (CHO) cell line development and recombinant protein production",
+    "Metabolic engineering, flux analysis, and systems biology with a clear application to industrial biotechnology or mammalian cells",
+    "Cell and gene therapy manufacturing, viral vector production, engineered therapeutic cells, and enabling platform technologies"
+  ],
+  "interest_labels": [
+    "Bioprocessing",
+    "Mammalian cell engineering",
+    "Metabolic engineering",
+    "Cell & gene therapy",
+    "CHO production systems"
+  ],
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "demo": true,
+  "min_relevance": 6,
+  "top_n": 20,
+  "papers": [
+    {
+      "title": "[Fictional example] A model-guided approach to balancing growth and productivity in CHO cultures",
+      "authors": [
+        "Example Researcher",
+        "Demo Author"
+      ],
+      "url": "",
+      "doi": "",
+      "abstract": "FICTIONAL DEMONSTRATION. The fictional study combines extracellular metabolite profiling with a constrained metabolic model to compare feeding strategies in CHO cultures. The synthetic example illustrates a feeding strategy that balances viable cell growth and recombinant protein production; no real experimental claim is made.",
+      "journal": "Biotechnology and Bioengineering",
+      "published": "2026-10-18",
+      "source": "Offline demonstration",
+      "is_preprint": false,
+      "relevance": 10,
+      "methodology": "The fictional study combines extracellular metabolite profiling with a constrained metabolic model to compare feeding strategies in CHO cultures.",
+      "key_findings": "The synthetic example illustrates a feeding strategy that balances viable cell growth and recombinant protein production; no real experimental claim is made.",
+      "rationale": "Illustrative relevance score for the configured research interests. No LLM or paper API was called.",
+      "status": "scored",
+      "error": ""
+    },
+    {
+      "title": "[Fictional example] Engineering producer-cell metabolism for more consistent vector manufacturing",
+      "authors": [
+        "Example Researcher",
+        "Demo Author"
+      ],
+      "url": "",
+      "doi": "",
+      "abstract": "FICTIONAL DEMONSTRATION. The fictional study compares engineered mammalian producer cells using small-scale process runs and measurements of metabolic state and vector quality. This illustrative result describes reduced process variability, with scale-up and product-specific validation still required.",
+      "journal": "Molecular Therapy Advances",
+      "published": "2026-10-17",
+      "source": "Offline demonstration",
+      "is_preprint": false,
+      "relevance": 9,
+      "methodology": "The fictional study compares engineered mammalian producer cells using small-scale process runs and measurements of metabolic state and vector quality.",
+      "key_findings": "This illustrative result describes reduced process variability, with scale-up and product-specific validation still required.",
+      "rationale": "Illustrative relevance score for the configured research interests. No LLM or paper API was called.",
+      "status": "scored",
+      "error": ""
+    },
+    {
+      "title": "[Fictional example] A tunable perfusion platform for rapid media screening",
+      "authors": [
+        "Example Researcher",
+        "Demo Author"
+      ],
+      "url": "",
+      "doi": "",
+      "abstract": "FICTIONAL DEMONSTRATION. The fictional preprint uses parallel miniature perfusion cultures and online process measurements to screen media formulations. This synthetic example highlights how screening could prioritize media candidates for subsequent confirmation in production processes.",
+      "journal": "bioRxiv",
+      "published": "2026-10-16",
+      "source": "Offline demonstration",
+      "is_preprint": true,
+      "relevance": 8,
+      "methodology": "The fictional preprint uses parallel miniature perfusion cultures and online process measurements to screen media formulations.",
+      "key_findings": "This synthetic example highlights how screening could prioritize media candidates for subsequent confirmation in production processes.",
+      "rationale": "Illustrative relevance score for the configured research interests. No LLM or paper API was called.",
+      "status": "scored",
+      "error": ""
+    }
+  ],
+  "source_statuses": [
+    {
+      "name": "Offline demonstration",
+      "status": "ok",
+      "fetched": 3,
+      "message": "Synthetic examples only; no live sources or LLM calls."
+    }
+  ],
+  "stats": {
+    "discovered": 3,
+    "scored": 3,
+    "missing_abstract": 0,
+    "scoring_failed": 0,
+    "capped": 0
+  }
+}
