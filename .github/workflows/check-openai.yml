@@ -33,11 +33,12 @@ jobs:
 
           payload = {
               "model": "gpt-4.1-mini",
-              "messages": [{"role": "user", "content": "Reply OK."}],
-              "max_completion_tokens": 1
+              "input": "Reply OK.",
+              "max_output_tokens": 16,
+              "store": False
           }
           request = urllib.request.Request(
-              "https://api.openai.com/v1/chat/completions",
+              "https://api.openai.com/v1/responses",
               data=json.dumps(payload).encode("utf-8"),
               headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
               method="POST",
