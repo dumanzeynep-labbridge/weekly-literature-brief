@@ -1,5 +1,6 @@
 {
   "title": "The Bioprocess Brief",
+  "research_profile": "I study how mitochondrial biogenesis and energy metabolism driven by nuclear respiratory factor 1 (NRF1) supply ATP to the endoplasmic reticulum through the AXER/SLC35B1 ATP/ADP exchanger, and whether engineering this axis raises secretory capacity and recombinant protein productivity in CHO cells. Most useful to me: ER ATP import or ER energy status; NRF1/PGC-1/TFAM-driven mitochondrial biogenesis in mammalian cells; energy or redox engineering (NDI1, AOX, LbNOX, NAD+ transport) in production cells; genetically encoded ATP or redox biosensors usable in CHO; and CHO cell line or bioprocess studies linking metabolism to specific productivity. Treat NRF1 as nuclear respiratory factor 1, not NFE2L1, unless the paper says otherwise; GABPA (NRF2 in the mitochondrial sense) is distinct from NFE2L2.",
   "interest_labels": [
     "Bioprocessing",
     "Mammalian cell engineering",
@@ -16,9 +17,103 @@
     "Cell and gene therapy manufacturing, viral vector production, engineered therapeutic cells, and enabling platform technologies",
     "The mechanistic link from nuclear respiratory factor 1 (NRF1)-driven mitochondrial biogenesis and energy metabolism through AXER/SLC35B1-mediated endoplasmic reticulum ATP supply to CHO secretory capacity and recombinant protein productivity, including energy/redox engineering and biosensors. Distinguish nuclear respiratory factor 1 from the NFE2L1 alias NRF1, and GABPA (nuclear respiratory factor 2 in mitochondrial literature) from NFE2L2/NRF2; flag ambiguous gene identities rather than assuming equivalence."
   ],
+  "personal": {
+    "top_n": 10,
+    "min_score": 4,
+    "ai_shortlist": 30,
+    "block_weights": {
+      "er_atp": 4,
+      "mitochondria": 3,
+      "host": 3,
+      "energy": 2,
+      "phenotype": 2,
+      "biosensors": 2
+    },
+    "weak_terms": [
+      "PRC",
+      "GEM",
+      "qP",
+      "AOX",
+      "energy state",
+      "membrane potential",
+      "uncoupling",
+      "ATP/ADP ratio",
+      "Warburg effect",
+      "OXPHOS",
+      "oxidative phosphorylation",
+      "electron transport chain",
+      "respiratory capacity",
+      "proton motive force",
+      "BiP",
+      "HSPA5",
+      "UPR",
+      "unfolded protein response",
+      "ER stress",
+      "XBP1",
+      "ATF6",
+      "PERK",
+      "SERCA",
+      "nucleotide transporter",
+      "nucleotide sugar transporter",
+      "SLC35 family",
+      "fed-batch",
+      "mammalian cell culture",
+      "FRET biosensor",
+      "roGFP",
+      "redox biosensor",
+      "QUEEN"
+    ],
+    "exclude_terms": [],
+    "watch_authors": [
+      "Alan Dickson",
+      "David James",
+      "C. Mark Smales",
+      "Gyun Min Lee",
+      "Jae Seong Lee",
+      "Helene Faustrup Kildegaard",
+      "Yuansheng Yang",
+      "Michael Betenbaugh",
+      "Jamey Young",
+      "Lars Keld Nielsen",
+      "Nathan Lewis",
+      "Dong-Yup Lee",
+      "Nicole Borth",
+      "Niall Barron",
+      "Colin Clarke",
+      "Paula Meleady",
+      "Kelvin Lee",
+      "Wei-Shou Hu",
+      "Kerstin Otte",
+      "Cleo Kontoravdi",
+      "Karen Polizzi",
+      "Henrik Clausen",
+      "Michael Butler",
+      "Jonathan Bones",
+      "Véronique Chotteau"
+    ],
+    "seed_papers": [
+      {
+        "doi": "10.1038/s41467-018-06003-9",
+        "note": "AXER is an ATP/ADP exchanger in the ER membrane (2018)"
+      },
+      {
+        "doi": "10.1038/s41586-025-09069-w",
+        "note": "Stepwise ATP translocation into the ER by human SLC35B1 (2025)"
+      },
+      {
+        "doi": "10.7554/elife.49682",
+        "note": "Mitochondria supply ATP to the ER (eLife 2019)"
+      },
+      {
+        "doi": "10.7841/ksbbj.2022.37.4.139",
+        "note": "Inducing mitochondrial biogenesis in CHO raises recombinant protein production (2022)"
+      }
+    ],
+    "citation_alerts": true
+  },
   "llm": {
-    "provider": "openai",
-    "model": "gpt-4.1-mini",
+    "provider": "gemini",
+    "model": "gemini-3.5-flash-lite",
     "max_output_tokens": 1000,
     "workers": 3
   },
@@ -31,12 +126,76 @@
     "contact_email": "",
     "crossref": [
       {
-        "name": "Nature Portfolio (10.1038)",
-        "prefix": "10.1038"
+        "name": "Nature Biotechnology",
+        "issn": "1546-1696"
       },
       {
-        "name": "PLOS journals",
-        "prefix": "10.1371"
+        "name": "Nature Communications",
+        "issn": "2041-1723"
+      },
+      {
+        "name": "Nature Metabolism",
+        "issn": "2522-5812"
+      },
+      {
+        "name": "Nature Chemical Biology",
+        "issn": "1552-4469"
+      },
+      {
+        "name": "Nature Cell Biology",
+        "issn": "1476-4679"
+      },
+      {
+        "name": "Communications Biology",
+        "issn": "2399-3642"
+      },
+      {
+        "name": "Scientific Reports",
+        "issn": "2045-2322"
+      },
+      {
+        "name": "PLOS One",
+        "issn": "1932-6203"
+      },
+      {
+        "name": "PLOS Computational Biology",
+        "issn": "1553-7358"
+      },
+      {
+        "name": "PLOS Biology",
+        "issn": "1545-7885"
+      },
+      {
+        "name": "mAbs",
+        "issn": "1942-0870"
+      },
+      {
+        "name": "Journal of Biotechnology",
+        "issn": "0168-1656"
+      },
+      {
+        "name": "ACS Synthetic Biology",
+        "issn": "2161-5063"
+      },
+      {
+        "name": "Cell Reports",
+        "issn": "2211-1247"
+      },
+      {
+        "name": "Cell Metabolism",
+        "issn": "1550-4131"
+      },
+      {
+        "name": "Molecular Cell",
+        "issn": "1097-2765"
+      },
+      {
+        "name": "Journal of Biological Chemistry",
+        "issn": "1083-351X"
+      },
+      {
+        "name": "eLife",
+        "issn": "2050-084X"
       },
       {
         "name": "Biotechnology and Bioengineering",
@@ -86,6 +245,17 @@
         "name": "Molecular Therapy Advances",
         "issn": "3117-387X"
       }
+    ],
+    "biorxiv_categories": [
+      "bioengineering",
+      "biochemistry",
+      "biophysics",
+      "cell biology",
+      "molecular biology",
+      "synthetic biology",
+      "systems biology",
+      "genomics",
+      "physiology"
     ]
   },
   "search": {
