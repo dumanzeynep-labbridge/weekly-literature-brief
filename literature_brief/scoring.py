@@ -8,6 +8,8 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import threading
+import time
 from typing import Any
 
 from .http import HttpClient
@@ -154,6 +156,10 @@ class Scorer:
         profile = config.get("research_profile", "")
         self.profile = profile.strip() if isinstance(profile, str) else ""
         self.client = client
+        # Free tiers limit requests per minute; space requests across all workers.
+        self.min_interval = float(llm.get("min_interval_seconds", 0) or 0)
+        self._pace_lock = threading.Lock()
+        self._next_request = 0.0
         self.cache_dir = Path(cache_dir)
 
     def _cache_key(self, paper: Paper) -> str:
@@ -224,6 +230,7 @@ class Scorer:
             {"research_profile": self.profile, "research_interests": self.interests, "paper": asdict(paper)},
             ensure_ascii=False, sort_keys=True,
         )
+        self._pace()
         if self.provider == "openai":
             result = self._score_openai(api_key, source_data)
         elif self.provider == "gemini":
@@ -232,6 +239,15 @@ class Scorer:
             result = self._score_anthropic(api_key, source_data)
         self._save_cache(cache_path, cache_key, result)
         return result
+
+    def _pace(self) -> None:
+        if self.min_interval <= 0:
+            return
+        with self._pace_lock:
+            wait = self._next_request - time.monotonic()
+            if wait > 0:
+                time.sleep(wait)
+            self._next_request = time.monotonic() + self.min_interval
 
     def _score_openai(self, api_key: str, source_data: str) -> dict[str, Any]:
         response = self.client.request_json(

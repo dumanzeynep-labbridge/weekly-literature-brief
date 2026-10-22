@@ -60,7 +60,7 @@ def build_report(config: dict, *, end: date | None = None, cache_dir: Path = Pat
     if personal and personal.get("ai_shortlist"):
         # Free-tier friendly: only the strongest personal matches reach the LLM.
         by_score = {id(record): paper for paper, record in eligible}
-        ranked = [record for record in personal_order([record for _, record in eligible]) if record["personal_score"] > 0]
+        ranked = [record for record in personal_order([record for _, record in eligible]) if record["personal_score"] >= max(personal["ai_min_score"], 0.1)]
         limit = min(limit, personal["ai_shortlist"]) if limit else personal["ai_shortlist"]
         eligible = [(by_score[id(record)], record) for record in ranked]
         cap_reason = "Not sent for AI assessment: outside your personal shortlist."

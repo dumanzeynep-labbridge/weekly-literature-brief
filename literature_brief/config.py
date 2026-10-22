@@ -63,6 +63,9 @@ def load_config(path: Path) -> dict:
         value = llm.setdefault(key, default)
         if type(value) is not int or not low <= value <= high:
             raise ValueError(f"llm.{key} must be an integer between {low} and {high}.")
+    interval = llm.setdefault("min_interval_seconds", 0)
+    if type(interval) not in {int, float} or not 0 <= interval <= 120:
+        raise ValueError("llm.min_interval_seconds must be a number between 0 and 120.")
     for key in ("biorxiv", "enrich_abstracts"):
         if type(sources.setdefault(key, True)) is not bool:
             raise ValueError(f"sources.{key} must be true or false.")

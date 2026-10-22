@@ -61,9 +61,16 @@
       "FRET biosensor",
       "roGFP",
       "redox biosensor",
-      "QUEEN"
+      "QUEEN",
+      "Ca²⁺-ATPase",
+      "Ca2+-ATPase"
     ],
-    "exclude_terms": [],
+    "exclude_terms": [
+      "Author Correction",
+      "Publisher Correction",
+      "Erratum",
+      "Retraction Note"
+    ],
     "watch_authors": [
       "Alan Dickson",
       "David James",
@@ -109,13 +116,15 @@
         "note": "Inducing mitochondrial biogenesis in CHO raises recombinant protein production (2022)"
       }
     ],
-    "citation_alerts": true
+    "citation_alerts": true,
+    "ai_min_score": 1
   },
   "llm": {
     "provider": "gemini",
     "model": "gemini-3.5-flash-lite",
     "max_output_tokens": 1000,
-    "workers": 3
+    "workers": 1,
+    "min_interval_seconds": 4.5
   },
   "min_relevance": 6,
   "top_n": 20,

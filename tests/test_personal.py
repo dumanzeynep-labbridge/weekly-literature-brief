@@ -15,7 +15,7 @@ from literature_brief.mailer import build_message, email_picks, send
 from literature_brief.models import Paper
 from literature_brief.personal import fetch_seed_context, rank_records, validate_personal_config
 from literature_brief.pipeline import build_report
-from literature_brief.render import render_brief, select_personal
+from literature_brief.render import render_brief, select_featured, select_personal
 from literature_brief.scoring import Scorer
 from literature_brief.search import evaluate_paper
 from literature_brief.sources import fetch_all
@@ -144,7 +144,7 @@ class PipelineTests(unittest.TestCase):
         return {"title": "Brief", "interests": ["CHO"], "llm": {"provider": "gemini", "model": "m", "workers": 1},
                 "min_relevance": 6, "top_n": 20, "max_papers": 0, "search": SEARCH,
                 "sources": {"biorxiv": False, "crossref": [{"name": "J", "issn": "1234-5678"}]},
-                "personal": personal(ai_shortlist=1, **overrides)}
+                "personal": personal(**dict({"ai_shortlist": 1}, **overrides))}
 
     @patch("literature_brief.pipeline.fetch_all")
     @patch("literature_brief.pipeline.Scorer")
@@ -159,6 +159,15 @@ class PipelineTests(unittest.TestCase):
         statuses = {paper["title"]: paper["status"] for paper in report["papers"]}
         self.assertEqual(statuses, {"AXER in CHO cells": "scored", "Bird migration": "capped"})
         self.assertEqual(report["personal"]["top_n"], 10)
+
+    @patch("literature_brief.pipeline.fetch_all")
+    @patch("literature_brief.pipeline.Scorer")
+    def test_papers_below_ai_min_score_are_not_sent(self, scorer, fetch):
+        papers = [Paper("A fed-batch culture", [], "https://doi.org/10.1/a", "Cells grown in fed-batch mode", "J", "2026-10-13", "10.1/a")]
+        fetch.return_value = (papers, [{"name": "J", "status": "ok", "fetched": 1, "message": ""}])
+        report, _ = build_report(self.config(ai_shortlist=30), end=END)
+        scorer.return_value.score.assert_not_called()
+        self.assertEqual(report["papers"][0]["status"], "capped")
 
 
 class BiorxivCategoryTests(unittest.TestCase):
@@ -212,9 +221,22 @@ class RenderAndEmailTests(unittest.TestCase):
         self.assertIn('href="https://example.github.io/brief/"', html)
 
     def test_ai_scores_take_priority_in_email(self):
-        report = report_with([paper("ai", 2, status="scored", relevance=9, rationale="For your project."),
-                              paper("free", 9)], fetch_only=False, min_relevance=6)
-        self.assertEqual([item["title"] for item in email_picks(report)], ["ai"])
+        report = report_with([paper("free", 9), paper("ai", 2, status="scored", relevance=9, rationale="For your project.")],
+                             fetch_only=False, min_relevance=6)
+        self.assertEqual([item["title"] for item in email_picks(report)], ["ai", "free"])
+
+    def test_ai_mode_keeps_strong_personal_matches_when_ai_is_strict_or_fails(self):
+        papers = [paper("ai-top", 1, status="scored", relevance=8, rationale="R."),
+                  paper("ai-low", 5, status="scored", relevance=4, rationale="R."),
+                  paper("rate-limited", 6, status="scoring_failed"),
+                  paper("weak", 2, status="scored", relevance=3, rationale="R.")]
+        report = report_with(papers, fetch_only=False, min_relevance=6, top_n=20)
+        self.assertEqual([item["title"] for item in select_featured(report)], ["ai-top", "rate-limited", "ai-low"])
+        self.assertEqual([item["title"] for item in email_picks(report)], ["ai-top", "rate-limited"])
+        with tempfile.TemporaryDirectory() as folder:
+            html = render_brief(report, Path(folder)).read_text(encoding="utf-8")
+        self.assertNotIn("No featured papers this week", html)
+        self.assertEqual(html.count('id="paper-3"'), 1)  # featured cards are not repeated in lower groups
 
     def test_send_is_skipped_without_smtp_settings(self):
         with patch.dict(os.environ, {}, clear=True):
@@ -222,6 +244,18 @@ class RenderAndEmailTests(unittest.TestCase):
 
 
 class GeminiTests(unittest.TestCase):
+    def test_requests_are_spaced_for_free_tier_limits(self):
+        scorer = Scorer({"llm": {"provider": "gemini", "min_interval_seconds": 4.5}, "interests": ["CHO"]},
+                        None, Path("."))
+        clock = [100.0]
+        with patch("literature_brief.scoring.time.monotonic", side_effect=lambda: clock[0]), \
+             patch("literature_brief.scoring.time.sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)) as sleep:
+            scorer._pace()
+            clock[0] += 1.0
+            scorer._pace()
+        sleep.assert_called_once()
+        self.assertAlmostEqual(sleep.call_args[0][0], 3.5)
+
     def test_gemini_uses_openai_compatible_endpoint_and_profile(self):
         result = {"relevance": 9, "methodology": "M.", "key_findings": "F.", "rationale": "For your project, R."}
 

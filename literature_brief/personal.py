@@ -45,6 +45,7 @@ DEFAULTS = {
     "top_n": 10,
     "min_score": 4,
     "ai_shortlist": 30,
+    "ai_min_score": 1,
     "title_multiplier": 1.5,
     "weak_term_points": 0.3,
     "combination_points": 3,

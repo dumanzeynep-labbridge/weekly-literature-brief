@@ -21,22 +21,18 @@ import ssl
 import sys
 
 from .http import HttpClient, HttpError
-from .render import _date_label, _personal_score, _safe_url, _score, select_personal
+from .render import _date_label, _personal_score, _safe_url, _score, select_featured, select_personal
 
 LOGGER = logging.getLogger(__name__)
 
 
 def email_picks(report: dict) -> list[dict]:
     """AI-assessed picks when available, otherwise the free personal ranking."""
-    papers = list(report.get("papers") or [])
     settings = report.get("personal") or {}
     limit = int(settings.get("top_n", report.get("top_n", 10)) or 10)
     if not report.get("fetch_only"):
-        scored = [paper for paper in papers if (_score(paper) or 0) >= int(report.get("min_relevance", 6))]
-        if scored:
-            scored.sort(key=lambda paper: (_score(paper), _personal_score(paper) or 0, str(paper.get("published") or "")),
-                        reverse=True)
-            return scored[:limit]
+        # Same order as the page: AI picks first, then free-ranking picks.
+        return select_featured(report)[:limit]
     if settings:
         return select_personal(report)[0]
     return []

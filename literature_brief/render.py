@@ -75,6 +75,25 @@ def select_personal(report: dict) -> tuple[list[dict], list[dict]]:
     return picks, [paper for paper in ordered if id(paper) not in chosen]
 
 
+def select_featured(report: dict) -> list[dict]:
+    """AI mode: papers at the AI threshold first, then the free-ranking picks.
+
+    A strict model or a failed (e.g. rate-limited) request therefore never hides
+    a strong personal match such as a watched author's paper.
+    """
+    papers = list(report.get("papers") or [])
+    min_relevance = int(report.get("min_relevance", 6))
+    top_n = int(report.get("top_n", 20))
+    eligible = sorted((paper for paper in papers if (_score(paper) or 0) >= min_relevance),
+                      key=lambda paper: (_score(paper), _personal_score(paper) or 0, str(paper.get("published") or "")),
+                      reverse=True)
+    featured = eligible[:top_n] if top_n > 0 else eligible
+    if report.get("personal"):
+        chosen = {id(paper) for paper in featured}
+        featured = featured + [paper for paper in select_personal(report)[0] if id(paper) not in chosen]
+    return featured
+
+
 def _focused_match_details(paper: dict, focused_searches: dict) -> str:
     match = paper.get("focused_search") or {}
     blocks = {block["id"]: block.get("label", block["id"]) for block in focused_searches.get("blocks", [])}
@@ -251,9 +270,11 @@ def render_brief(report: dict, output_dir: Path) -> Path:
     if ranked_free:
         featured = picks
     else:
-        featured = papers if fetch_only else (eligible[:top_n] if top_n > 0 else eligible)
-    remaining = [] if fetch_only else eligible[len(featured):]
-    unscored = papers if fetch_only else [paper for paper in papers if _score(paper) is None]
+        featured = papers if fetch_only else select_featured(report)
+    shown = {id(paper) for paper in featured}
+    remaining = [] if fetch_only else [paper for paper in eligible if id(paper) not in shown]
+    lower = [paper for paper in lower if id(paper) not in shown]
+    unscored = papers if fetch_only else [paper for paper in papers if _score(paper) is None and id(paper) not in shown]
     featured_html = "\n".join(card(paper, rank if ranked_free or not fetch_only else None) for rank, paper in enumerate(featured, 1))
     if not featured:
         if ranked_free and papers:
@@ -324,6 +345,8 @@ def render_brief(report: dict, output_dir: Path) -> Path:
     )
     papers_heading = "Papers discovered this week" if fetch_only else "This week's top papers"
     ranking_note = "Source metadata &amp; available abstracts" if fetch_only else "Ranked by relevance · newest first on ties"
+    if personal is not None and not fetch_only:
+        ranking_note = f"AI relevance {min_relevance}+ first, then your top personal matches"
     if ranked_free:
         papers_heading = "Your top matches this week"
         ranking_note = "Ranked by personal match points · newest first on ties"
