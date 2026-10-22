@@ -8,7 +8,7 @@ import logging
 import os
 from pathlib import Path
 
-from .config import load_config
+from .config import API_KEY_VARIABLES, load_config
 from .demo import demo_report
 from .http import HttpClient, HttpError
 from .pipeline import build_report
@@ -31,7 +31,7 @@ def main(argv=None) -> int:
         if args.demo:
             report, exit_code = demo_report(config, args.end_date), 0
         else:
-            variable = "OPENAI_API_KEY" if config["llm"]["provider"] == "openai" else "ANTHROPIC_API_KEY"
+            variable = API_KEY_VARIABLES[config["llm"]["provider"]]
             if not args.fetch_only and not os.environ.get(variable, "").strip():
                 parser.error(f"Set {variable} for live assessment, or use --demo / --fetch-only.")
             email = config["sources"].get("contact_email", "")

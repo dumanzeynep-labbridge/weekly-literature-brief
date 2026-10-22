@@ -19,6 +19,9 @@ ROOT = Path(__file__).resolve().parents[1]
 def configuration():
     config = json.loads((ROOT / "config.json").read_text())
     config["llm"]["workers"] = 1
+    # These tests cover the unranked path offline; test_personal covers ranking
+    # and seed-paper lookups with mocked responses.
+    config.pop("personal", None)
     return config
 
 
@@ -184,7 +187,7 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_empty_workflow_variables_preserve_configured_values(self):
         config = self.load(configuration(), {"LLM_PROVIDER": "", "LLM_MODEL": ""})
-        self.assertEqual(config["llm"]["model"], "gpt-4.1-mini")
+        self.assertEqual(config["llm"]["model"], configuration()["llm"]["model"])
 
     def test_invalid_limits_and_source_settings_fail_early(self):
         for field, value in (("max_papers", -1), ("min_relevance", 11), ("top_n", True)):

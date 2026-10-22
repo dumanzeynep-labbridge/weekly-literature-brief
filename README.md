@@ -1,8 +1,27 @@
 # The Bioprocess Brief
 
-A Python project that discovers new papers, matches your keyword combinations, includes available abstracts, writes a standalone `index.html`, and publishes it with GitHub Actions and GitHub Pages every **Monday at 07:00 UTC**. The deployed default is **discovery only: no paid AI calls, no AI scores, and no generated summaries**.
+A Python project that discovers new papers, **ranks them for your own project at no cost**, writes a standalone `index.html`, publishes it with GitHub Actions and GitHub Pages every **Monday at 07:00 UTC**, and can email you the top picks. The deployed default uses **no AI and no paid API**: papers are ranked by transparent rules (weighted keywords, watched authors, and your seed papers), and each card says exactly why it was picked.
 
-The configured interests are bioprocessing, mammalian cell engineering, metabolic engineering, CHO production systems, and technologies applicable to cell and gene therapy manufacturing. Optional AI assessment supports both **OpenAI** and **Anthropic**, and can be enabled later. Python 3.11 or newer is required; there are **no external Python dependencies**.
+The configured focus is NRF1-driven mitochondrial biogenesis, AXER/SLC35B1 ER ATP supply, and CHO secretory productivity, within broader bioprocessing and cell-engineering interests. Optional AI summaries can use **Gemini's free tier**, or paid **OpenAI** or **Anthropic** keys. Python 3.11 or newer is required; there are **no external Python dependencies**.
+
+## Personalise your brief (free)
+
+Edit the `personal` section and `research_profile` in `config.json`:
+
+| Setting | What it does |
+| --- | --- |
+| `seed_papers` | DOIs of papers central to your work. New papers that **cite** them are pulled in from OpenAlex and boosted, and papers with **similar text** score higher. This is the strongest personal signal; add 10–20 (your own papers, key papers in the field). |
+| `watch_authors` | People you follow, as `"Given Family"` (25 CHO groups are preset). A full first-name match, or at least two matching initials such as `Lee, J. S.`, earns `watch_author_points`. A single shared initial such as `Young, J.` earns half and is labelled "initial-only match", because names like Lee, Yang, and Young are common. Use the name form people publish under, e.g. `C. Mark Smales`. |
+| `block_weights` | How much each `search.blocks` topic is worth. A term in the title counts 1.5×. |
+| `weak_terms` | Broad or ambiguous terms (for example `ER stress`, `OXPHOS`, `PRC`) that count only 0.3× on their own. |
+| `exclude_terms` | Terms that subtract `exclude_penalty` points, such as a model system you never use. |
+| `top_n`, `min_score` | How many papers are featured and emailed, and the minimum match points. |
+| `ai_shortlist` | In AI mode, only this many top-ranked papers are sent to the model, which keeps Gemini within free limits. |
+| `research_profile` | Plain-language description of your project. AI mode scores against it and writes "for your project…" explanations. |
+
+Every point a paper earns is listed on its card under **Why it is in your brief**. If good papers are missing, add seed papers or terms; if noise gets through, move terms to `weak_terms` or `exclude_terms`.
+
+OpenAlex works without a key, but anonymous requests share a small daily budget per IP address, which GitHub's shared runners can exhaust. A free key from [openalex.org/settings/api](https://openalex.org/settings/api), saved as the repository secret `OPENALEX_API_KEY`, makes citation alerts reliable.
 
 ## Set up GitHub in a few steps
 
@@ -14,7 +33,13 @@ The configured interests are bioprocessing, mammalian cell engineering, metaboli
 
 The workflow then runs weekly with `cron: "0 7 * * 1"`. It uses GitHub's deployment artifact flow, so you do not need a `gh-pages` branch or a personal access token. Pull requests run offline tests without API calls or deployment. Manual runs on other branches do not deploy.
 
-You can enable AI assessment later. Under **Settings → Secrets and variables → Actions → Variables**, add the repository variable `BRIEF_MODE` with value `ai`. Under **Secrets**, add your selected provider's funded API key directly in GitHub: `OPENAI_API_KEY` for OpenAI, or `ANTHROPIC_API_KEY` for Anthropic. For Anthropic, also set the repository variable `LLM_PROVIDER=anthropic`. `LLM_MODEL` can optionally select a compatible model; the defaults are `gpt-4.1-mini` for OpenAI and `claude-haiku-4-5` for Anthropic. To return to discovery only, remove `BRIEF_MODE` or set it to `fetch-only`. The only accepted mode values are `fetch-only` and `ai`; other values stop generation with an error.
+You can enable AI summaries later **without paying**, using Gemini's free tier:
+
+1. Create a key in [Google AI Studio](https://aistudio.google.com/apikey); the free tier needs no billing account.
+2. Under **Settings → Secrets and variables → Actions → Secrets**, add `GEMINI_API_KEY`.
+3. Under **Variables**, add `BRIEF_MODE` with value `ai`. `config.json` already selects `llm.provider: gemini`.
+
+Only the `personal.ai_shortlist` top papers (30 by default) are sent to the model each week, so a run stays small. Free-tier limits vary by model and can change; check yours in AI Studio. Under Google's terms, content sent to the free tier may be used to improve Google's products. Paper titles and abstracts are public, but do not add private notes to `research_profile` if that matters to you. Paid providers remain available: set `LLM_PROVIDER` to `openai` or `anthropic` and add `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`. `LLM_MODEL` can optionally select a compatible model; the defaults are `gemini-3.5-flash-lite`, `gpt-4.1-mini`, and `claude-haiku-4-5`. To return to the free ranking only, remove `BRIEF_MODE` or set it to `fetch-only`. The only accepted mode values are `fetch-only` and `ai`; other values stop generation with an error.
 
 GitHub schedules can start late under load, especially at the top of the hour, and public repositories' schedules can be disabled after 60 days without repository activity. Check Actions if an expected edition is missing. See [GitHub scheduling behavior](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule) and [Pages workflow setup](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
@@ -62,9 +87,11 @@ Discovery uses documented metadata APIs rather than scraping publisher websites:
 
 | Source | Retrieval |
 | --- | --- |
-| bioRxiv | Direct API, full date-range pagination; first versions only |
-| Nature Portfolio | Crossref DOI prefix `10.1038` |
-| PLOS journals | Crossref DOI prefix `10.1371` |
+| bioRxiv | Direct API, full date-range pagination; first versions only; limited to `sources.biorxiv_categories` |
+| Papers citing your seed papers | OpenAlex `cites:` filter, any journal |
+| Nature Biotechnology, Nature Communications, Nature Metabolism, Nature Chemical Biology, Nature Cell Biology, Communications Biology, Scientific Reports | Crossref ISSNs in `config.json` |
+| PLOS One, PLOS Computational Biology, PLOS Biology | Crossref ISSNs in `config.json` |
+| mAbs, Journal of Biotechnology, ACS Synthetic Biology, Cell Reports, Cell Metabolism, Molecular Cell, Journal of Biological Chemistry, eLife | Crossref ISSNs in `config.json` |
 | Biotechnology and Bioengineering | Crossref ISSN `1097-0290` |
 | Metabolic Engineering | Crossref ISSN `1096-7176` |
 | Trends in Biotechnology | Crossref ISSN `0167-7799` |
@@ -82,7 +109,7 @@ The NLM catalog identifies *Molecular Therapy Advances* as the continuation of *
 
 Crossref supplies journal articles' titles, authors, DOI URLs, dates, and available abstracts. Missing abstracts are looked up by DOI in **Europe PMC**, in batches. Some publishers do not supply abstracts or complete author lists, and Europe PMC may not yet have a matching record. Missing data remains explicit; the model never fills in bibliographic fields. Papers without abstracts remain available for manual review and receive no invented score or summary.
 
-Nature and PLOS coverage is determined by the configured DOI prefixes, not a live complete publisher catalog. In particular, journals using other DOI prefixes need their own ISSN entry. Metadata deposits and indexing can be delayed, so this is a discovery brief, not guaranteed exhaustive journal coverage. Strict seven-day windows can miss papers indexed after their publication week. Use `--end-date` to rerun a past window if needed.
+Whole-publisher DOI prefixes (such as Nature's `10.1038`) are still supported, but they pull in thousands of unrelated papers a week, so the defaults list journals individually. Metadata deposits and indexing can be delayed, so this is a discovery brief, not guaranteed exhaustive journal coverage. Strict seven-day windows can miss papers indexed after their publication week. Use `--end-date` to rerun a past window if needed.
 
 To add a journal, append its registered ISSN to `sources.crossref` in `config.json`:
 
@@ -98,16 +125,16 @@ The window is **seven complete UTC calendar days**, ending at midnight at the st
 
 The earliest known online or print publication day is used. Crossref deposit, creation, and indexing dates are never substituted for publication dates. Imprecise earlier dates are excluded and reported as partial coverage. bioRxiv revisions of older papers are excluded.
 
-In the deployed discovery-only default, all discovered papers remain available with their metadata, focused keyword matches, and available abstracts. No relevance score or AI summary is requested. Papers are displayed newest first, with missing abstracts identified explicitly.
+In the deployed free default, the top `personal.top_n` papers with at least `personal.min_score` match points are featured with their reasons. Every other discovered paper stays available, closest match first, under **Other papers this week**. No AI summary is requested. If no `personal` section is configured, all papers are shown newest first, as before.
 
-In optional AI mode, every discovered paper with an available abstract is scored unless the assessment cap is set. No keyword prefilter excludes papers before assessment. The model returns a validated object with:
+In optional AI mode with a `personal` section, only the `ai_shortlist` highest-ranked papers with abstracts are assessed; without one, every paper with an abstract is scored unless the assessment cap is set. The model returns a validated object with:
 
 - `relevance`: integer from 1 to 10, based on the interests in `config.json`.
 - `methodology`: the first summary bullet, grounded in the abstract.
 - `key_findings`: the second summary bullet, grounded in the abstract.
 - `rationale`: a short explanation of topic fit and material transferability limits.
 
-Scores 9–10 mean direct relevance to mammalian/CHO production or cell and gene therapy manufacturing; 7–8 indicate clearly relevant enabling work; 5–6 indicate a plausible indirect application; 1–4 indicate limited connection. The prompt distinguishes reviews from experiments and treats microbial-to-mammalian transfer cautiously. Paper text is treated as source data, never as instructions. Scores measure topic fit, not scientific quality.
+Scores 9–10 mean the paper directly tests, extends, or supplies a method for the core question in `research_profile`; 7–8 indicate clearly relevant enabling work; 5–6 indicate a plausible indirect application; 1–4 indicate limited connection. The prompt distinguishes reviews from experiments and treats microbial-to-mammalian transfer cautiously. Paper text is treated as source data, never as instructions. Scores measure topic fit, not scientific quality.
 
 In AI mode, the HTML shows the top 20 papers scoring at least 6 by default, ordered by relevance and then publication date. Other assessed and unscored papers remain accessible in expandable groups. Both modes include search, publication-type and focused-combination filtering, expandable abstracts, full author lists when available, and JSON download. The page uses local CSS and JavaScript and remains readable with JavaScript disabled.
 
@@ -147,8 +174,9 @@ The workflow uses the repository Actions variable `BRIEF_MODE` to select `fetch-
 | `min_relevance` | `6` | Minimum score for the featured/relevant groups |
 | `top_n` | `20` | Featured cards; `0` shows all relevant papers up front |
 | `max_papers` | `0` | Maximum papers sent for assessment; `0` scores all available abstracts |
-| `llm.provider` | `openai` | `openai` or `anthropic` |
-| `llm.model` | `gpt-4.1-mini` | A compatible model; change it with the provider or leave empty for its default |
+| `llm.provider` | `gemini` | `gemini` (free tier), `openai`, or `anthropic` |
+| `llm.model` | `gemini-3.5-flash-lite` | A compatible model; change it with the provider or leave empty for its default |
+| `sources.biorxiv_categories` | Nine life-science categories | bioRxiv categories to keep; `[]` keeps all |
 | `llm.workers` | `3` | Concurrent assessments; lower this if your account has tight rate limits |
 | `llm.max_output_tokens` | `1000` | Maximum output tokens per assessment |
 | `sources.request_interval_seconds` | `0.15` | Pause between sequential metadata requests |
@@ -169,6 +197,8 @@ config.json                      Topics, model, journals, display settings
 literature_brief/sources.py       bioRxiv, Crossref, Europe PMC, dates, deduplication
 literature_brief/scoring.py       Provider adapters, prompt, validation, cache
 literature_brief/search.py        Focused block matching and terminology notes
+literature_brief/personal.py      Free personal ranking, seed papers, OpenAlex citation alerts
+literature_brief/mailer.py        Optional weekly email of the top picks over SMTP
 literature_brief/pipeline.py      Assessment orchestration and failure decisions
 literature_brief/render.py        Standalone HTML and JSON export
 preview/index.html               Fictional offline demonstration
@@ -181,4 +211,17 @@ The supplied preview and tests run without credentials. A live discovery-only br
 
 ## Email delivery
 
-Email delivery is not implemented or configured. GitHub Pages provides the published brief, and GitHub Actions provides run logs. Automated email still needs a chosen sending service, recipient settings, sender/domain verification where required, securely stored email credentials, an email-rendering and sending step, and delivery/failure verification. Adding an LLM API key does not configure email delivery.
+After each successful deployment, the `email` job sends the week's top picks (AI-assessed picks in AI mode, otherwise the free ranking) with a link to the full brief. It uses your own mail account over SMTP, so it is free. Until it is configured, the job is skipped successfully.
+
+Use an **app-specific password**, never your normal account password. For iCloud Mail, create one at [account.apple.com](https://account.apple.com) → Sign-In and Security → App-Specific Passwords. For Gmail, enable 2-Step Verification and create an App Password. Then add, under **Settings → Secrets and variables → Actions**:
+
+| Name | Kind | iCloud example | Gmail example |
+| --- | --- | --- | --- |
+| `SMTP_PASSWORD` | Secret | the app-specific password | the App Password |
+| `SMTP_HOST` | Variable | `smtp.mail.me.com` | `smtp.gmail.com` |
+| `SMTP_PORT` | Variable | `587` | `587` |
+| `SMTP_USERNAME` | Variable | your iCloud address | your Gmail address |
+| `EMAIL_TO` | Variable | where to send it; commas for several | same |
+| `EMAIL_FROM` | Variable, optional | defaults to `SMTP_USERNAME` | same |
+
+To preview the email locally without sending: `python3 -m literature_brief.mailer --brief site/brief.json --preview email.html`.

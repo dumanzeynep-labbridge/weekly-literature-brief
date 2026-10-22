@@ -7,9 +7,12 @@ import os
 import re
 from pathlib import Path
 
+from .personal import validate_personal_config
 from .search import validate_search_config
 
-DEFAULT_MODELS = {"openai": "gpt-4.1-mini", "anthropic": "claude-haiku-4-5"}
+# Gemini's free tier makes AI summaries possible without paid credits.
+DEFAULT_MODELS = {"openai": "gpt-4.1-mini", "anthropic": "claude-haiku-4-5", "gemini": "gemini-3.5-flash-lite"}
+API_KEY_VARIABLES = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY", "gemini": "GEMINI_API_KEY"}
 
 
 def load_config(path: Path) -> dict:
@@ -25,7 +28,7 @@ def load_config(path: Path) -> dict:
         original_provider = original_provider.lower()
     provider = os.environ.get("LLM_PROVIDER", "").strip() or original_provider
     if not isinstance(provider, str) or provider.lower() not in DEFAULT_MODELS:
-        raise ValueError("LLM_PROVIDER / llm.provider must be openai or anthropic.")
+        raise ValueError("LLM_PROVIDER / llm.provider must be openai, anthropic, or gemini.")
     provider = provider.lower()
     llm["provider"] = provider
     override_model = os.environ.get("LLM_MODEL", "").strip()
@@ -63,6 +66,9 @@ def load_config(path: Path) -> dict:
     for key in ("biorxiv", "enrich_abstracts"):
         if type(sources.setdefault(key, True)) is not bool:
             raise ValueError(f"sources.{key} must be true or false.")
+    categories = sources.setdefault("biorxiv_categories", [])
+    if not isinstance(categories, list) or any(not isinstance(value, str) or not value.strip() for value in categories):
+        raise ValueError("sources.biorxiv_categories must be an array of bioRxiv category names.")
     entries = sources.setdefault("crossref", [])
     if not isinstance(entries, list):
         raise ValueError("sources.crossref must be an array.")
@@ -85,4 +91,8 @@ def load_config(path: Path) -> dict:
     if not isinstance(labels, list) or any(not isinstance(label, str) for label in labels):
         raise ValueError("interest_labels must be an array of text labels.")
     validate_search_config(config.get("search"))
+    validate_personal_config(config.get("personal"))
+    profile = config.setdefault("research_profile", "")
+    if not isinstance(profile, str):
+        raise ValueError("research_profile must be text.")
     return config

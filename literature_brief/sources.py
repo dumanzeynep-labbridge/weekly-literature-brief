@@ -244,6 +244,7 @@ def _fetch_biorxiv(start: date, end: date, client: HttpClient, config: dict) -> 
     read = 0
     cursor = 0
     seen_pages: set[tuple] = set()
+    categories = {str(value).strip().casefold() for value in config.get("biorxiv_categories") or []}
     try:
         while True:
             _sleep(config)
@@ -268,6 +269,9 @@ def _fetch_biorxiv(start: date, end: date, client: HttpClient, config: dict) -> 
                     skipped["missing title or DOI"] += 1
                     continue
                 # Updated old preprints are not new publications this week.
+                if categories and str(item.get("category") or "").strip().casefold() not in categories:
+                    skipped["outside configured bioRxiv categories"] += 1
+                    continue
                 if _int(item.get("version")) != 1:
                     skipped["preprint revisions or unknown version"] += 1
                     continue
